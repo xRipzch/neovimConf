@@ -1,0 +1,7 @@
+# Neovim reads this natively (`:help editorconfig`): Lua files in this config
+# use 2-space indent, matching .stylua.toml.
+root = true
+
+[*.lua]
+indent_style = space
+indent_size = 2
