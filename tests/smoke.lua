@@ -177,6 +177,22 @@ section('theme', function()
 end)
 
 -- [[ Real buffers: treesitter, statusline, LSP, git ]] ------------------------------------
+--- Every description which-key can show under <leader>, groups expanded.
+---@return string[]
+local function which_key_leader_descs()
+  local mode = require('which-key.buf').get { mode = 'n' }
+  local descs = {}
+  local function walk(node)
+    for _, child in ipairs(node:children()) do
+      if child.desc then table.insert(descs, child.desc) end
+      walk(child)
+    end
+  end
+  local leader = mode and mode.tree:find ' '
+  if leader then walk(leader) end
+  return descs
+end
+
 section('go buffer', function()
   local dir = vim.fn.tempname()
   vim.fn.mkdir(dir .. '/work/Scripts', 'p')
@@ -213,6 +229,16 @@ section('go buffer', function()
     end
   end
 
+  -- Every custom key must be listed somewhere under <leader> in which-key
+  -- (keys without <leader>, like <C-h> or ]c, are mirrored into their group).
+  local shown = which_key_leader_descs()
+  local all_keys =
+    vim.list_extend(vim.deepcopy(GLOBAL_KEYMAPS), { { 'n', 'grd' }, { 'n', ']c' }, { 'n', '[c' }, { 'n', ' gp' }, { 'n', ' gb' }, { 'n', ' gr' } })
+  for _, km in ipairs(all_keys) do
+    local desc = vim.fn.maparg(km[2], km[1], false, true).desc
+    local listed = desc ~= nil and vim.iter(shown):any(function(d) return d == desc or vim.startswith(d, desc .. '  (') end)
+    check(('which-key lists %s'):format(km[2]), listed, desc)
+  end
 end)
 
 section('telescope (lazy)', function()
