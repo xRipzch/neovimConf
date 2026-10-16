@@ -17,7 +17,7 @@ end
 
 local LSP_ATTACH_TIMEOUT_MS = 20000
 local POLL_INTERVAL_MS = 100
-local MAX_CUSTOM_KEYMAPS = 30
+local MAX_CUSTOM_KEYMAPS = 31 -- the brief says "~30"; <leader>fn (new file) is number 31
 
 local failures = 0
 local function check(name, ok, detail)
@@ -83,6 +83,7 @@ local GLOBAL_KEYMAPS = {
   { 'n', ' fh' },
   { 'n', ' ft' },
   { 'n', ' ?' },
+  { 'n', ' fn' },
   { 'n', ' cf' },
   { 'n', ' dd' },
   { 'n', ' tt' },
@@ -296,6 +297,26 @@ section('explorer', function()
   -- Let neo-tree's scheduled callbacks finish; quitting in the same tick as
   -- `close` makes Neovim exit non-zero (a race, not reachable by hand).
   wait()
+end)
+
+section('new file', function()
+  local files = require 'config.files'
+  local dir = vim.fn.tempname()
+  vim.fn.mkdir(dir, 'p')
+  vim.cmd.cd(dir)
+
+  local ok, err = files.create 'sub/deep/new.py'
+  check('creates file + missing folders', ok and vim.fn.filereadable(dir .. '/sub/deep/new.py') == 1, err)
+  check('opens the new file', vim.api.nvim_buf_get_name(0) == dir .. '/sub/deep/new.py', vim.api.nvim_buf_get_name(0))
+
+  vim.fn.writefile({ 'keep me' }, dir .. '/existing.txt')
+  ok = files.create 'existing.txt'
+  check('existing file is opened, not emptied', ok and vim.fn.readfile(dir .. '/existing.txt')[1] == 'keep me')
+
+  ok, err = files.create 'sub'
+  check('refuses a folder name', not ok and err ~= nil and err:find('folder', 1, true) ~= nil, err)
+  ok, err = files.create '   '
+  check('refuses an empty name', not ok and err ~= nil, err)
 end)
 
 io.stdout:write(('\n%d failure(s)\n'):format(failures))

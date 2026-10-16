@@ -12,6 +12,9 @@ local RESIZE_STEP = 2 -- columns/rows per resize key press
 -- Clear search highlighting.
 map('n', '<Esc>', '<cmd>nohlsearch<CR>', { desc = 'Clear search highlight' })
 
+-- Create a new file (asks for the path; missing folders are created).
+map('n', '<leader>fn', function() require('config.files').prompt() end, { desc = 'New file' })
+
 -- [[ Splits ]] ------------------------------------------------------------------
 -- The letters match stock Vim's <C-w> commands (<C-w>v, <C-w>s, <C-w>q, <C-w>o),
 -- so learning these teaches you the built-in keys too.
