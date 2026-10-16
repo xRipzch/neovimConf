@@ -212,6 +212,7 @@ section('go buffer', function()
       check('git keymap ' .. lhs, vim.fn.maparg(lhs, 'n', false, true).buffer == 1)
     end
   end
+
 end)
 
 section('telescope (lazy)', function()
@@ -245,17 +246,30 @@ section('telescope (lazy)', function()
   end
 end)
 
+--- Filetype of every window in the current tab.
+local function window_filetypes()
+  return vim.tbl_map(function(win) return vim.bo[vim.api.nvim_win_get_buf(win)].filetype end, vim.api.nvim_tabpage_list_wins(0))
+end
+
 section('explorer', function()
-  vim.cmd 'Neotree show'
-  local found = false
-  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-    if vim.bo[vim.api.nvim_win_get_buf(win)].filetype == 'neo-tree' then found = true end
-  end
-  check('neo-tree opens', found)
-  vim.cmd 'Neotree close'
+  local explorer = vim.fn.maparg(' e', 'n', false, true).callback
+  local wait = function() vim.wait(POLL_INTERVAL_MS * 5) end
+
+  explorer() -- closed -> open + focus
+  wait()
+  check('<leader>e opens and focuses the tree', vim.bo.filetype == 'neo-tree', vim.bo.filetype)
+  vim.cmd.wincmd 'l'
+  check('<C-l> leaves the tree', vim.bo.filetype ~= 'neo-tree', vim.bo.filetype)
+  explorer() -- open but in a file -> focus the tree again
+  wait()
+  check('<leader>e from a file focuses the open tree', vim.bo.filetype == 'neo-tree', vim.bo.filetype)
+  check('...without opening a second tree', #vim.tbl_filter(function(ft) return ft == 'neo-tree' end, window_filetypes()) == 1)
+  explorer() -- in the tree -> close
+  wait()
+  check('<leader>e in the tree closes it', not vim.tbl_contains(window_filetypes(), 'neo-tree'), vim.inspect(window_filetypes()))
   -- Let neo-tree's scheduled callbacks finish; quitting in the same tick as
   -- `close` makes Neovim exit non-zero (a race, not reachable by hand).
-  vim.wait(POLL_INTERVAL_MS * 5)
+  wait()
 end)
 
 io.stdout:write(('\n%d failure(s)\n'):format(failures))
