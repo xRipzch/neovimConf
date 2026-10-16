@@ -81,12 +81,12 @@ local GLOBAL_KEYMAPS = {
   { 'n', ' fb' },
   { 'n', ' fr' },
   { 'n', ' fh' },
-  { 'n', ' ft' },
   { 'n', ' ?' },
   { 'n', ' fn' },
   { 'n', ' cf' },
   { 'n', ' dd' },
   { 'n', ' tt' },
+  { 'n', ' tb' },
 }
 -- Buffer-local ones, checked later: grd (LSP), ]c [c <leader>gp gb gr (git).
 local BUFFER_KEYMAP_COUNT = 6
@@ -259,7 +259,7 @@ section('telescope (lazy)', function()
   local backup = vim.fn.filereadable(state_file) == 1 and vim.fn.readfile(state_file) or nil
   local original = theme.get_state().name
   vim.cmd.colorscheme 'kanagawa-dragon'
-  vim.fn.maparg(' ft', 'n', false, true).callback()
+  vim.fn.maparg(' tt', 'n', false, true).callback()
   vim.wait(POLL_INTERVAL_MS * 5)
   vim.api.nvim_feedkeys(vim.keycode '<Esc><Esc>', 'x', false)
   vim.cmd 'stopinsert'

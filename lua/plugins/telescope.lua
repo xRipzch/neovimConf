@@ -70,9 +70,9 @@ map('n', '<leader>fg', picker 'live_grep', { desc = 'Find by grep (text in files
 map('n', '<leader>fb', picker 'buffers', { desc = 'Find open buffers' })
 map('n', '<leader>fr', picker 'oldfiles', { desc = 'Find recent files' })
 map('n', '<leader>fh', picker 'help_tags', { desc = 'Find help' })
-map('n', '<leader>ft', function()
+map('n', '<leader>tt', function()
   require('config.theme').sync_colors_name() -- so cancelling restores the exact variant
   picker 'colorscheme'()
-end, { desc = 'Find theme (live preview)' })
+end, { desc = 'Pick theme (live preview)' })
 map('n', '<leader>?', picker 'keymaps', { desc = 'Search all keymaps' })
 map('n', '<leader>dd', picker 'diagnostics', { desc = 'Diagnostics list' })

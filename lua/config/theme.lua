@@ -1,5 +1,5 @@
 -- [[ Theme persistence + transparency ]]
--- Remembers the last colorscheme (however it was chosen: <leader>ft, or
+-- Remembers the last colorscheme (however it was chosen: <leader>tt, or
 -- `:colorscheme name`) and whether the background is transparent, and restores
 -- both on startup. State is a tiny JSON file in Neovim's state directory.
 

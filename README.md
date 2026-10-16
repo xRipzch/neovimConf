@@ -43,7 +43,6 @@ without `<leader>` (like `<C-h>`, `]c`, `grd`) are shown in their group
 | `<leader>fb` | n | Find open buffers | plugins/telescope.lua |
 | `<leader>fr` | n | Find recent files | plugins/telescope.lua |
 | `<leader>fh` | n | Find help | plugins/telescope.lua |
-| `<leader>ft` | n | Find theme (live preview, remembered) | plugins/telescope.lua |
 | `<leader>fn` | n | New file (asks for a path, creates missing folders) | config/keymaps.lua |
 | `<leader>?` | n | Search all keymaps | plugins/telescope.lua |
 | `<leader>cf` | n, x | Format buffer / selection | plugins/format.lua |
@@ -53,7 +52,8 @@ without `<leader>` (like `<C-h>`, `]c`, `grd`) are shown in their group
 | `<leader>gp` | n | Git: preview change | plugins/git.lua |
 | `<leader>gb` | n | Git: blame line | plugins/git.lua |
 | `<leader>gr` | n | Git: reset change | plugins/git.lua |
-| `<leader>tt` | n | Toggle transparent background (remembered) | plugins/themes.lua |
+| `<leader>tt` | n | Pick theme (live preview, remembered) | plugins/telescope.lua |
+| `<leader>tb` | n | Toggle transparent background (remembered) | plugins/themes.lua |
 
 ### Built-in keys worth knowing (not remapped)
 

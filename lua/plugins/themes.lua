@@ -1,5 +1,5 @@
 -- [[ Colorschemes ]]
--- Six themes to pick from with <leader>ft (live preview, choice is remembered).
+-- Six themes to pick from with <leader>tt (live preview, choice is remembered).
 --
 -- Why this doesn't slow startup: during startup `vim.pack.add` only puts the
 -- themes on the 'runtimepath' (like `:packadd!`). None of their Lua code runs
@@ -7,7 +7,7 @@
 -- are lazy-loaded. Only your saved theme is loaded at startup.
 --
 -- Add a theme: add its repo below and restart. Remove one: delete its line.
--- Transparency (<leader>tt) works for all of them, see config/theme.lua.
+-- Transparent background (<leader>tb) works for all of them, see config/theme.lua.
 
 local pack = require 'config.pack'
 local gh = pack.gh
@@ -24,4 +24,4 @@ pack.add {
 local theme = require 'config.theme'
 theme.setup()
 
-vim.keymap.set('n', '<leader>tt', theme.toggle_transparency, { desc = 'Toggle transparent background' })
+vim.keymap.set('n', '<leader>tb', theme.toggle_transparency, { desc = 'Toggle transparent background' })
