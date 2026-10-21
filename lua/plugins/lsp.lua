@@ -9,7 +9,8 @@
 --   grr references      gri implementation   grt type definition
 --   gO document symbols [d / ]d prev/next diagnostic   <C-w>d diagnostic popup
 --   <C-s> (insert mode) signature help
--- We add only `grd` (go to definition), which Neovim doesn't map by default.
+-- We add `grd` (go to definition), which Neovim doesn't map by default, and
+-- <leader>ch to toggle inlay hints (parameter names / types shown inline).
 --
 -- Add a server: add it to SERVERS (lspconfig name) and its Mason package to
 -- MASON_PACKAGES, then restart. Server names: `:help lspconfig-all`.
@@ -51,6 +52,12 @@ local SERVERS = {
       gopls = {
         semanticTokens = true, -- richer highlighting (types, params, ...)
         gofumpt = true, -- gopls' own formatting/fixes follow gofumpt style
+        hints = { -- inlay hints, see the toggle at the bottom of this file
+          parameterNames = true,
+          assignVariableTypes = true,
+          compositeLiteralFields = true,
+          rangeVariableTypes = true,
+        },
       },
     },
   },
@@ -61,7 +68,10 @@ local SERVERS = {
         disableOrganizeImports = true, -- ruff organizes imports
         -- 'standard' = pyright's normal checks; basedpyright's default
         -- ('recommended') is very strict for everyday scripts.
-        analysis = { typeCheckingMode = 'standard' },
+        analysis = {
+          typeCheckingMode = 'standard',
+          inlayHints = { callArgumentNames = true, variableTypes = true, functionReturnTypes = true },
+        },
       },
     },
   },
@@ -81,6 +91,7 @@ local SERVERS = {
           library = { vim.env.VIMRUNTIME }, -- know about the `vim.*` API
         },
         format = { enable = false }, -- stylua formats Lua (plugins/format.lua)
+        hint = { enable = true, setType = true }, -- inlay hints
       },
     },
   },
@@ -112,3 +123,34 @@ vim.api.nvim_create_autocmd('LspAttach', {
   desc = 'LSP keymaps',
   callback = function(event) vim.keymap.set('n', 'grd', vim.lsp.buf.definition, { buffer = event.buf, desc = 'Go to definition' }) end,
 })
+
+-- [[ Inlay hints ]]
+-- Shown in normal mode only: they are hidden while typing (InsertEnter) and
+-- come back on InsertLeave. <leader>ch switches them on/off for good.
+local inlay_hints_wanted = true
+
+--- Show or hide inlay hints in every buffer that has a server supporting them.
+---@param visible boolean
+local function set_inlay_hints(visible) vim.lsp.inlay_hint.enable(visible) end
+
+local function toggle_inlay_hints()
+  inlay_hints_wanted = not inlay_hints_wanted
+  set_inlay_hints(inlay_hints_wanted)
+  vim.notify('Inlay hints ' .. (inlay_hints_wanted and 'on' or 'off'))
+end
+
+set_inlay_hints(inlay_hints_wanted)
+
+local inlay_group = vim.api.nvim_create_augroup('user-inlay-hints', { clear = true })
+vim.api.nvim_create_autocmd('InsertEnter', {
+  group = inlay_group,
+  desc = 'Hide inlay hints while typing',
+  callback = function() set_inlay_hints(false) end,
+})
+vim.api.nvim_create_autocmd('InsertLeave', {
+  group = inlay_group,
+  desc = 'Restore inlay hints in normal mode',
+  callback = function() set_inlay_hints(inlay_hints_wanted) end,
+})
+
+vim.keymap.set('n', '<leader>ch', toggle_inlay_hints, { desc = 'Toggle inlay hints' })

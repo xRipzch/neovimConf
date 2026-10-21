@@ -17,7 +17,7 @@ end
 
 local LSP_ATTACH_TIMEOUT_MS = 20000
 local POLL_INTERVAL_MS = 100
-local MAX_CUSTOM_KEYMAPS = 31 -- the brief says "~30"; <leader>fn (new file) is number 31
+local MAX_CUSTOM_KEYMAPS = 32 -- the brief says "~30"; <leader>fn (new file) is 31, <leader>ch (inlay hints) is 32
 
 local failures = 0
 local function check(name, ok, detail)
@@ -84,6 +84,7 @@ local GLOBAL_KEYMAPS = {
   { 'n', ' ?' },
   { 'n', ' fn' },
   { 'n', ' cf' },
+  { 'n', ' ch' },
   { 'n', ' dd' },
   { 'n', ' tt' },
   { 'n', ' tb' },
@@ -138,6 +139,22 @@ section('lsp', function()
   for _, name in ipairs { 'gopls', 'basedpyright', 'ruff', 'lua_ls' } do
     check('lsp enabled: ' .. name, vim.lsp.is_enabled(name))
   end
+end)
+
+section('inlay hints', function()
+  check('inlay hints on by default', vim.lsp.inlay_hint.is_enabled())
+  vim.cmd 'doautocmd InsertEnter'
+  check('hidden in insert mode', not vim.lsp.inlay_hint.is_enabled())
+  vim.cmd 'doautocmd InsertLeave'
+  check('back in normal mode', vim.lsp.inlay_hint.is_enabled())
+
+  local toggle = vim.fn.maparg(' ch', 'n', false, true).callback
+  toggle()
+  check('<leader>ch turns hints off', not vim.lsp.inlay_hint.is_enabled())
+  vim.cmd 'doautocmd InsertLeave'
+  check('InsertLeave keeps them off after toggle', not vim.lsp.inlay_hint.is_enabled())
+  toggle()
+  check('<leader>ch turns hints on again', vim.lsp.inlay_hint.is_enabled())
 end)
 
 section('no unwanted UI', function()
