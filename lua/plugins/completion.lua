@@ -22,6 +22,10 @@ require('blink.cmp').setup {
     -- Accept a Copilot suggestion if one is shown (plugins/copilot.lua),
     -- else jump to the next snippet placeholder, else a normal Tab.
     ['<Tab>'] = { function() return require('plugins.copilot').accept() end, 'snippet_forward', 'fallback' },
+    -- Arrows move in the menu when it is open, else cycle Copilot
+    -- suggestions when one is shown, else move the cursor.
+    ['<Up>'] = { 'select_prev', function() return require('plugins.copilot').previous() end, 'fallback' },
+    ['<Down>'] = { 'select_next', function() return require('plugins.copilot').next() end, 'fallback' },
   },
 
   appearance = { nerd_font_variant = 'mono' },

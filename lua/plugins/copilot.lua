@@ -8,6 +8,8 @@
 --   <Tab>        accept the whole suggestion (set up in completion.lua, so
 --                it falls back to blink's snippet jump / a normal Tab)
 --   <C-Right>    accept the next word only
+--   <Down>/<Up>  next / previous suggestion (completion.lua; the completion
+--                menu goes first when it is open, else the cursor moves)
 --
 -- First time: open any file, run `:LspCopilotSignIn` and follow the browser
 -- steps. Works with the free Copilot plan (https://github.com/settings/copilot).
@@ -16,6 +18,7 @@
 local M = {}
 
 local SERVER = 'copilot'
+local INLINE_NAMESPACE = 'nvim.lsp.inline_completion' -- where Neovim draws the ghost text
 
 -- Files Copilot never sees (secrets). Lua patterns matched against the file name.
 local PRIVATE_FILE_PATTERNS = {
@@ -71,6 +74,31 @@ function M.trim_to_next_word(item, bufnr, cursor)
     range = vim.range(bufnr, start_row, start_col, row, col),
   })
 end
+
+--- Whether a suggestion is shown in the current buffer (Neovim draws it as
+--- an extmark in this namespace).
+---@return boolean
+function M.is_visible()
+  local ns = vim.api.nvim_get_namespaces()[INLINE_NAMESPACE]
+  if not ns then return false end
+  return #vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, { limit = 1 }) > 0
+end
+
+--- Show another suggestion, `step` places away (wraps around); the hint
+--- " (2/3)" after the ghost text tells which one is shown.
+---@param step integer
+---@return boolean cycled false when no suggestion is shown
+local function cycle(step)
+  if not M.is_visible() then return false end
+  vim.lsp.inline_completion.select { count = step }
+  return true
+end
+
+---@return boolean cycled
+function M.next() return cycle(1) end
+
+---@return boolean cycled
+function M.previous() return cycle(-1) end
 
 --- Accept the whole suggestion.
 ---@return boolean accepted false when no suggestion is shown

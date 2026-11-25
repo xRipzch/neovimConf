@@ -142,6 +142,25 @@ section('copilot', function()
   check('insert <C-Right> has desc', word_key.desc ~= nil and word_key.desc ~= '', vim.inspect(word_key.desc))
   check('accept is a no-op without a suggestion', copilot.accept() == false)
 
+  local keymap = require('blink.cmp.config').keymap
+  for _, key in ipairs { '<Up>', '<Down>' } do
+    local chain = keymap[key]
+    check(
+      key .. ': menu, then Copilot, then cursor',
+      chain[1]:find('select_', 1, true) and type(chain[2]) == 'function' and chain[3] == 'fallback',
+      vim.inspect(chain)
+    )
+  end
+  check('no suggestion -> arrows not taken', not copilot.is_visible() and copilot.next() == false and copilot.previous() == false)
+  local ghost_buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_set_current_buf(ghost_buf)
+  local ns = vim.api.nvim_create_namespace 'nvim.lsp.inline_completion'
+  vim.api.nvim_buf_set_extmark(ghost_buf, ns, 0, 0, { virt_text = { { 'ghost' } } })
+  check('ghost text detected', copilot.is_visible())
+  check('suggestion shown -> arrows cycle', copilot.next() and copilot.previous())
+  vim.cmd.bprevious()
+  vim.api.nvim_buf_delete(ghost_buf, { force = true })
+
   check('private: .env', not copilot.is_allowed '/p/.env')
   check('private: .env.local', not copilot.is_allowed '/p/.env.local')
   check('private: key file', not copilot.is_allowed '/p/server.key')
