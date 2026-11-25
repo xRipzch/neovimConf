@@ -17,7 +17,7 @@ end
 
 local LSP_ATTACH_TIMEOUT_MS = 20000
 local POLL_INTERVAL_MS = 100
-local MAX_CUSTOM_KEYMAPS = 32 -- the brief says "~30"; <leader>fn (new file) is 31, <leader>ch (inlay hints) is 32
+local MAX_CUSTOM_KEYMAPS = 33 -- the brief says "~30"; <leader>fn (new file) is 31, <leader>ch (inlay hints) is 32, insert <C-Right> (accept word) is 33
 
 local failures = 0
 local function check(name, ok, detail)
@@ -91,6 +91,9 @@ local GLOBAL_KEYMAPS = {
 }
 -- Buffer-local ones, checked later: grd (LSP), ]c [c <leader>gp gb gr (git).
 local BUFFER_KEYMAP_COUNT = 6
+-- Insert-mode ones (not in which-key, which only lists normal-mode keys):
+-- <C-Right> accept next word of a Copilot suggestion.
+local INSERT_KEYMAP_COUNT = 1
 
 section('keymaps', function()
   for _, km in ipairs(GLOBAL_KEYMAPS) do
@@ -98,7 +101,7 @@ section('keymaps', function()
     local has_desc = type(info) == 'table' and info.desc ~= nil and info.desc ~= ''
     check(('keymap %s %s has desc'):format(km[1], km[2]), has_desc, vim.inspect(info.desc))
   end
-  local total = #GLOBAL_KEYMAPS + BUFFER_KEYMAP_COUNT
+  local total = #GLOBAL_KEYMAPS + BUFFER_KEYMAP_COUNT + INSERT_KEYMAP_COUNT
   check(('custom keymaps <= %d'):format(MAX_CUSTOM_KEYMAPS), total <= MAX_CUSTOM_KEYMAPS, total)
 end)
 
@@ -127,6 +130,49 @@ section('blink.cmp', function()
   check('signature help on', config.signature.enabled == true)
   check('docs auto-show', config.completion.documentation.auto_show == true)
   check('<C-s> mapped in blink', config.keymap['<C-s>'] ~= nil)
+end)
+
+section('copilot', function()
+  local copilot = require 'plugins.copilot'
+  check('copilot server enabled', vim.lsp.is_enabled 'copilot')
+  check('copilot telemetry off', vim.lsp.config.copilot.settings.telemetry.telemetryLevel == 'off')
+  check('inline completion enabled', vim.lsp.inline_completion.is_enabled())
+  check('<Tab> tries Copilot first in blink', type(require('blink.cmp.config').keymap['<Tab>'][1]) == 'function')
+  local word_key = vim.fn.maparg('<C-Right>', 'i', false, true)
+  check('insert <C-Right> has desc', word_key.desc ~= nil and word_key.desc ~= '', vim.inspect(word_key.desc))
+  check('accept is a no-op without a suggestion', copilot.accept() == false)
+
+  check('private: .env', not copilot.is_allowed '/p/.env')
+  check('private: .env.local', not copilot.is_allowed '/p/.env.local')
+  check('private: key file', not copilot.is_allowed '/p/server.key')
+  check('allowed: main.go', copilot.is_allowed '/p/main.go')
+  check('allowed: env.go', copilot.is_allowed '/p/env.go')
+
+  local cases = {
+    { 'foo(bar)', 'foo' },
+    { '  beginDate = 1', '  beginDate' },
+    { '(begin);', '(' },
+    { '\n  return days;', '\n  ' },
+    { '   ', '   ' },
+    { '', '' },
+  }
+  for _, case in ipairs(cases) do
+    local got = copilot.next_word(case[1])
+    check(('next_word %q'):format(case[1]), got == case[2], vim.inspect(got))
+  end
+
+  -- Copilot-style item: replaces "  let x" (cursor after "let x") through
+  -- the ")" after the cursor; accept-word must keep that ")".
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { '  let x)' })
+  local item = { client_id = 1, _index = 1, insert_text = '  let x = new Date(begin)', range = vim.range(buf, 0, 0, 0, 8) }
+  local trimmed = copilot.trim_to_next_word(item, buf, { 0, 7 })
+  check('trim keeps typed text + next word', trimmed.insert_text == '  let x =', vim.inspect(trimmed.insert_text))
+  check('trim stops the range at the cursor', vim.deep_equal({ trimmed.range:to_extmark() }, { 0, 0, 0, 7 }), vim.inspect { trimmed.range:to_extmark() })
+  check('trim leaves the original item alone', item.insert_text == '  let x = new Date(begin)')
+  local plain = copilot.trim_to_next_word({ insert_text = 'abc def' }, buf, { 0, 7 })
+  check('trim without range', plain.insert_text == 'abc', vim.inspect(plain.insert_text))
+  vim.api.nvim_buf_delete(buf, { force = true })
 end)
 
 section('conform', function()

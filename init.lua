@@ -36,6 +36,7 @@ require 'plugins.telescope'
 require 'plugins.explorer'
 require 'plugins.treesitter'
 require 'plugins.lsp'
+require 'plugins.copilot' -- inline suggestions (before completion: <Tab> uses it)
 require 'plugins.completion'
 require 'plugins.format'
 require 'plugins.lint'

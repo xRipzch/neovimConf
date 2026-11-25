@@ -2,7 +2,8 @@
 -- Completion menu keys ('default' preset, same idea as Vim's built-in completion):
 --   <C-n>/<C-p> or arrows  move      <C-y> accept ("yes")    <C-e> close
 --   <C-space>              open menu / toggle docs
---   <Tab>/<S-Tab>          jump between snippet placeholders
+--   <Tab>                  accept Copilot suggestion, else next snippet placeholder
+--   <S-Tab>                previous snippet placeholder
 --   <C-s> or <C-k>         toggle function signature help
 -- See `:help blink-cmp-config` (or https://cmp.saghen.dev).
 
@@ -18,6 +19,9 @@ require('blink.cmp').setup {
     -- Neovim's built-in insert-mode <C-s> is signature help; point it at
     -- blink's signature window so both look the same.
     ['<C-s>'] = { 'show_signature', 'hide_signature', 'fallback' },
+    -- Accept a Copilot suggestion if one is shown (plugins/copilot.lua),
+    -- else jump to the next snippet placeholder, else a normal Tab.
+    ['<Tab>'] = { function() return require('plugins.copilot').accept() end, 'snippet_forward', 'fallback' },
   },
 
   appearance = { nerd_font_variant = 'mono' },

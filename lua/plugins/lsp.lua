@@ -33,6 +33,7 @@ local MASON_PACKAGES = {
   'basedpyright',
   'ruff', -- Python linter + formatter, also runs as a language server
   'lua-language-server',
+  'copilot-language-server', -- inline suggestions, configured in plugins/copilot.lua
   -- formatters
   'gofumpt',
   'goimports',
