@@ -54,7 +54,7 @@ without `<leader>` (like `<C-h>`, `]c`, `grd`) are shown in their group
 | `<leader>gr` | n | Git: reset change | plugins/git.lua |
 | `<leader>tt` | n | Pick theme (live preview, remembered) | plugins/telescope.lua |
 | `<leader>tb` | n | Toggle transparent background (remembered) | plugins/themes.lua |
-| `<Tab>` | i | Accept Copilot suggestion (else snippet jump / normal Tab) | plugins/completion.lua |
+| `<C-y>` | i | Accept menu item, else Copilot suggestion | plugins/completion.lua |
 | `<C-Right>` | i | Accept next word of Copilot suggestion (else normal `<C-Right>`) | plugins/copilot.lua |
 | `<Down>` / `<Up>` | i | Next / previous Copilot suggestion (menu first if open, else move cursor) | plugins/completion.lua |
 
@@ -84,7 +84,7 @@ buffer `:w path/new.go`. A plain `:w` fails there because the buffer has no name
 `<C-space>` open menu / docs.
 
 **Copilot suggestions (grey ghost text):** appear while you type in insert
-mode. `<Tab>` accepts all of it, `<C-Right>` the next word, `<Down>`/`<Up>`
+mode. `<C-y>` accepts all of it, `<C-Right>` the next word, `<Down>`/`<Up>`
 show the next / previous suggestion. First time: run `:CopilotSignIn` (works
 from any window) and finish the sign-in in the browser (the free Copilot plan
 works). `:CopilotSignOut` signs out. `.env`, `*.pem`, `*.key` and SSH key

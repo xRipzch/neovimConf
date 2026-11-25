@@ -5,8 +5,8 @@
 --
 -- Keys (insert mode, only while a suggestion is shown; otherwise they
 -- behave as usual):
---   <Tab>        accept the whole suggestion (set up in completion.lua, so
---                it falls back to blink's snippet jump / a normal Tab)
+--   <C-y>        accept the whole suggestion ("yes"; set up in completion.lua,
+--                where it accepts the completion menu's item first if open)
 --   <C-Right>    accept the next word only
 --   <Down>/<Up>  next / previous suggestion (completion.lua; the completion
 --                menu goes first when it is open, else the cursor moves)

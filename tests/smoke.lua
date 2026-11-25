@@ -137,7 +137,15 @@ section('copilot', function()
   check('copilot server enabled', vim.lsp.is_enabled 'copilot')
   check('copilot telemetry off', vim.lsp.config.copilot.settings.telemetry.telemetryLevel == 'off')
   check('inline completion enabled', vim.lsp.inline_completion.is_enabled())
-  check('<Tab> tries Copilot first in blink', type(require('blink.cmp.config').keymap['<Tab>'][1]) == 'function')
+  local accept_chain = require('blink.cmp.config').keymap['<C-y>']
+  check(
+    '<C-y>: menu, then Copilot, then fallback',
+    accept_chain[1] == 'select_and_accept' and type(accept_chain[2]) == 'function' and accept_chain[3] == 'fallback',
+    vim.inspect(accept_chain)
+  )
+  -- The config only holds overrides; no override = the preset's snippet jump / normal Tab.
+  local tab_override = require('blink.cmp.config').keymap['<Tab>']
+  check('<Tab> not overridden (snippets / indent)', tab_override == nil, vim.inspect(tab_override))
   local word_key = vim.fn.maparg('<C-Right>', 'i', false, true)
   check('insert <C-Right> has desc', word_key.desc ~= nil and word_key.desc ~= '', vim.inspect(word_key.desc))
   check('accept is a no-op without a suggestion', copilot.accept() == false)

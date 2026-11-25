@@ -1,9 +1,9 @@
 -- [[ blink.cmp: autocompletion + signature help ]]
 -- Completion menu keys ('default' preset, same idea as Vim's built-in completion):
 --   <C-n>/<C-p> or arrows  move      <C-y> accept ("yes")    <C-e> close
+--                          (<C-y> also accepts a Copilot suggestion when no menu is open)
 --   <C-space>              open menu / toggle docs
---   <Tab>                  accept Copilot suggestion, else next snippet placeholder
---   <S-Tab>                previous snippet placeholder
+--   <Tab>/<S-Tab>          jump between snippet placeholders (else a normal Tab)
 --   <C-s> or <C-k>         toggle function signature help
 -- See `:help blink-cmp-config` (or https://cmp.saghen.dev).
 
@@ -19,9 +19,10 @@ require('blink.cmp').setup {
     -- Neovim's built-in insert-mode <C-s> is signature help; point it at
     -- blink's signature window so both look the same.
     ['<C-s>'] = { 'show_signature', 'hide_signature', 'fallback' },
-    -- Accept a Copilot suggestion if one is shown (plugins/copilot.lua),
-    -- else jump to the next snippet placeholder, else a normal Tab.
-    ['<Tab>'] = { function() return require('plugins.copilot').accept() end, 'snippet_forward', 'fallback' },
+    -- "Yes": accept the menu item when the menu is open, else a Copilot
+    -- suggestion when one is shown (plugins/copilot.lua). Tab stays free
+    -- for indenting, since a suggestion is shown most of the time.
+    ['<C-y>'] = { 'select_and_accept', function() return require('plugins.copilot').accept() end, 'fallback' },
     -- Arrows move in the menu when it is open, else cycle Copilot
     -- suggestions when one is shown, else move the cursor.
     ['<Up>'] = { 'select_prev', function() return require('plugins.copilot').previous() end, 'fallback' },
