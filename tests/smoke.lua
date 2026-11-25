@@ -141,6 +141,9 @@ section('copilot', function()
   local word_key = vim.fn.maparg('<C-Right>', 'i', false, true)
   check('insert <C-Right> has desc', word_key.desc ~= nil and word_key.desc ~= '', vim.inspect(word_key.desc))
   check('accept is a no-op without a suggestion', copilot.accept() == false)
+  local commands = vim.api.nvim_get_commands {}
+  check('global :CopilotSignIn', commands.CopilotSignIn ~= nil)
+  check('global :CopilotSignOut', commands.CopilotSignOut ~= nil)
 
   local keymap = require('blink.cmp.config').keymap
   for _, key in ipairs { '<Up>', '<Down>' } do

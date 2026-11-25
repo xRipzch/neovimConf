@@ -11,9 +11,9 @@
 --   <Down>/<Up>  next / previous suggestion (completion.lua; the completion
 --                menu goes first when it is open, else the cursor moves)
 --
--- First time: open any file, run `:LspCopilotSignIn` and follow the browser
+-- First time: run `:CopilotSignIn` (works anywhere) and follow the browser
 -- steps. Works with the free Copilot plan (https://github.com/settings/copilot).
--- Check status: `:checkhealth vim.lsp`. Sign out: `:LspCopilotSignOut`.
+-- Check status: `:checkhealth vim.lsp`. Sign out: `:CopilotSignOut`.
 
 local M = {}
 
@@ -132,6 +132,86 @@ vim.lsp.config(SERVER, {
 })
 vim.lsp.enable(SERVER)
 vim.lsp.inline_completion.enable()
+
+-- [[ Sign in / out from anywhere ]]
+-- lspconfig's :LspCopilotSignIn only exists in buffers Copilot is attached
+-- to (not in the explorer, an empty start screen, ...). These work everywhere.
+
+--- The running Copilot client, or a new one started without attaching it to
+--- any buffer (signing in needs no file).
+---@return vim.lsp.Client?
+local function get_client()
+  local client = vim.lsp.get_clients({ name = SERVER })[1]
+  if client then return client end
+  local config = vim.tbl_extend('force', vim.lsp.config[SERVER], { name = SERVER, root_dir = vim.fn.getcwd() })
+  local id = vim.lsp.start(config, { attach = false })
+  if not id then return nil end
+  return vim.lsp.get_client_by_id(id)
+end
+
+---@param msg string
+---@param level? integer
+local function notify(msg, level) vim.notify('Copilot: ' .. msg, level or vim.log.levels.INFO) end
+
+local STARTUP_RETRY_DELAY_MS = 500 -- a just-started server needs a moment before it answers
+local STARTUP_MAX_RETRIES = 20 -- give up after ~10 s
+local NOT_READY_ERROR = 'not initialized' -- part of the server's "Agent service not initialized."
+
+--- Send a request, retrying while a just-started server is still starting up.
+---@param client vim.lsp.Client
+---@param method string
+---@param handler fun(err?: lsp.ResponseError, result: any)
+---@param retries_left? integer
+local function request_when_ready(client, method, handler, retries_left)
+  retries_left = retries_left or STARTUP_MAX_RETRIES
+  client:request(method, vim.empty_dict(), function(err, result)
+    if err and retries_left > 0 and tostring(err.message):find(NOT_READY_ERROR, 1, true) then
+      vim.defer_fn(function() request_when_ready(client, method, handler, retries_left - 1) end, STARTUP_RETRY_DELAY_MS)
+      return
+    end
+    handler(err, result)
+  end)
+end
+
+--- Report the result of the browser step of signing in.
+local function on_sign_in_finished(err, result)
+  if err then return notify('sign-in failed: ' .. err.message, vim.log.levels.ERROR) end
+  if type(result) == 'table' and result.status == 'OK' then return notify('signed in as ' .. result.user) end
+  notify('sign-in not finished: ' .. vim.inspect(result), vim.log.levels.WARN)
+end
+
+--- Copy the one-time code to the clipboard (if there is one) and say where to paste it.
+---@param code string
+---@param url string
+local function show_code(code, url)
+  local copied = pcall(vim.fn.setreg, '+', code)
+  notify(('enter code %s at %s%s'):format(code, url, copied and ' (copied to clipboard)' or ''))
+end
+
+function M.sign_in()
+  local client = get_client()
+  if not client then return notify('could not start copilot-language-server (installed? see :Mason)', vim.log.levels.ERROR) end
+  request_when_ready(client, 'signIn', function(err, result)
+    if err then return notify('sign-in failed: ' .. err.message, vim.log.levels.ERROR) end
+    if result.status == 'AlreadySignedIn' then return notify('already signed in as ' .. result.user) end
+    if not result.userCode then return notify('unexpected sign-in reply: ' .. vim.inspect(result), vim.log.levels.ERROR) end
+    show_code(result.userCode, result.verificationUri)
+    -- Opens the browser and waits until the code has been entered there.
+    if result.command then client:exec_cmd(result.command, {}, on_sign_in_finished) end
+  end)
+end
+
+function M.sign_out()
+  local client = get_client()
+  if not client then return notify('could not start copilot-language-server', vim.log.levels.ERROR) end
+  request_when_ready(client, 'signOut', function(err, result)
+    if err then return notify('sign-out failed: ' .. err.message, vim.log.levels.ERROR) end
+    notify(result.status == 'NotSignedIn' and 'was not signed in' or 'signed out')
+  end)
+end
+
+vim.api.nvim_create_user_command('CopilotSignIn', M.sign_in, { desc = 'Sign in to GitHub Copilot' })
+vim.api.nvim_create_user_command('CopilotSignOut', M.sign_out, { desc = 'Sign out of GitHub Copilot' })
 
 vim.keymap.set('i', '<C-Right>', function()
   if not M.accept_word() then return '<C-Right>' end

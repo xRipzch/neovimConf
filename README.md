@@ -85,10 +85,11 @@ buffer `:w path/new.go`. A plain `:w` fails there because the buffer has no name
 
 **Copilot suggestions (grey ghost text):** appear while you type in insert
 mode. `<Tab>` accepts all of it, `<C-Right>` the next word, `<Down>`/`<Up>`
-show the next / previous suggestion. First time: run
-`:LspCopilotSignIn` and finish the sign-in in the browser (the free Copilot
-plan works). `.env`, `*.pem`, `*.key` and SSH key files are never sent to
-Copilot, and telemetry is off. Settings are in `lua/plugins/copilot.lua`.
+show the next / previous suggestion. First time: run `:CopilotSignIn` (works
+from any window) and finish the sign-in in the browser (the free Copilot plan
+works). `:CopilotSignOut` signs out. `.env`, `*.pem`, `*.key` and SSH key
+files are never sent to Copilot, and telemetry is off. Settings are in
+`lua/plugins/copilot.lua`.
 
 **In Telescope:** type to filter, `<CR>` open, `<C-v>`/`<C-x>` open in a vertical /
 horizontal split, `<Esc>` close.
